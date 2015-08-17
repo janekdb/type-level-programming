@@ -15,7 +15,9 @@ that end this will all be enabled by `sbt`.
 
 ## Abbreviations
 
-|TLP|Type Level Programming||
+Abbreviation | Expansion
+------------ | ---------
+TLP | Type Level Programming
 
 ## Background
 
