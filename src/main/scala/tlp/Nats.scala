@@ -84,25 +84,25 @@ sealed trait Nat {
   type mult2to8to8 = this.type#multFF#multFF#multFF#multFF#multFF#multFF#multFF#multFF
 }
 
-sealed trait SBit0[HigherBits <: Nat] extends Nat {
-  override type inc = SBit1[HigherBits]
-  override type dbl = SBit0[SBit0[HigherBits]]
+sealed trait B0[HigherBits <: Nat] extends Nat {
+  override type inc = B1[HigherBits]
+  override type dbl = B0[B0[HigherBits]]
   override type half = HigherBits
   override type add[That <: Nat] = That#coreT[That#half#add[HigherBits]]
-  override type coreT[That <: Nat] = SBit0[That]
+  override type coreT[That <: Nat] = B0[That]
   override type mult[That <: Nat] = HigherBits#mult[That]#dbl
-  override type exp[That <: Nat] = That#expflip[SBit0[HigherBits]]
+  override type exp[That <: Nat] = That#expflip[B0[HigherBits]]
   override type expflip[That <: Nat] = HigherBits#expflip[That#mult[That]]
 }
 
-sealed trait SBit1[HigherBits <: Nat] extends Nat {
-  override type inc = SBit0[HigherBits#inc]
-  override type dbl = SBit0[SBit1[HigherBits]]
+sealed trait B1[HigherBits <: Nat] extends Nat {
+  override type inc = B0[HigherBits#inc]
+  override type dbl = B0[B1[HigherBits]]
   override type half = HigherBits
   override type add[That <: Nat] = That#inc#coreT[That#inc#half#add[HigherBits]]
-  override type coreT[That <: Nat] = SBit1[That]
+  override type coreT[That <: Nat] = B1[That]
   override type mult[That <: Nat] = HigherBits#mult[That]#dbl#add[That]
-  override type exp[That <: Nat] = That#expflip[SBit1[HigherBits]]
+  override type exp[That <: Nat] = That#expflip[B1[HigherBits]]
   // a^b -> b = this.type, a = That
   // b = 2n + 1
   // a^(2n + 1) = (a^2)^n * a
@@ -110,64 +110,64 @@ sealed trait SBit1[HigherBits <: Nat] extends Nat {
   override type expflip[That <: Nat] = HigherBits#expflip[That#mult[That]]#mult[That]
 }
 
-sealed trait HighBit0 extends Nat {
-  override type inc = HighBit1
-  override type dbl = HighBit0
-  override type half = HighBit0
+sealed trait MsbZero extends Nat {
+  override type inc = MsbOne
+  override type dbl = MsbZero
+  override type half = MsbZero
   override type add[That <: Nat] = That
-  override type coreT[That <: Nat] = SBit0[That]
-  override type mult[That <: Nat] = HighBit0
-  override type exp[That <: Nat] = HighBit0
-  override type expflip[That <: Nat] = HighBit1
+  override type coreT[That <: Nat] = B0[That]
+  override type mult[That <: Nat] = MsbZero
+  override type exp[That <: Nat] = MsbZero
+  override type expflip[That <: Nat] = MsbOne
 }
 
-sealed trait HighBit1 extends Nat {
-  override type inc = SBit0[HighBit1]
-  override type dbl = SBit0[HighBit1]
-  override type half = HighBit0
+sealed trait MsbOne extends Nat {
+  override type inc = B0[MsbOne]
+  override type dbl = B0[MsbOne]
+  override type half = MsbZero
   override type add[That <: Nat] = That#inc
-  override type coreT[That <: Nat] = SBit1[That]
+  override type coreT[That <: Nat] = B1[That]
   override type mult[That <: Nat] = That
-  override type exp[That <: Nat] = HighBit1
+  override type exp[That <: Nat] = MsbOne
   override type expflip[That <: Nat] = That
 }
 
-//Need a special type for the highest bit that switches SpecBit1 => SBit0, SpecBit1
+//Need a special type for the highest bit that switches SpecBit1 => B0, SpecBit1
 
 object Main1 extends App {
 
   // 1 = O + 1
-  implicitly[HighBit1 =:= HighBit0#inc]
+  implicitly[MsbOne =:= MsbZero#inc]
 
   // 2 = O + 1 + 1
-  implicitly[SBit0[HighBit1] =:= HighBit0#inc#inc]
+  implicitly[B0[MsbOne] =:= MsbZero#inc#inc]
 
   // 3 = O + 1 + 1 + 1
-  implicitly[SBit1[HighBit1] =:= HighBit0#inc#inc#inc]
+  implicitly[B1[MsbOne] =:= MsbZero#inc#inc#inc]
 
   // 4 = O + 1 + 1 + 1 +
-  implicitly[SBit0[SBit0[HighBit1]] =:= HighBit0#inc#inc#inc#inc]
+  implicitly[B0[B0[MsbOne]] =:= MsbZero#inc#inc#inc#inc]
 
   // etc
-  implicitly[SBit1[SBit0[HighBit1]] =:= HighBit0#inc#inc#inc#inc#inc]
-  implicitly[SBit0[SBit1[HighBit1]] =:= HighBit0#inc#inc#inc#inc#inc#inc]
-  implicitly[SBit1[SBit1[HighBit1]] =:= HighBit0#inc#inc#inc#inc#inc#inc#inc]
-  implicitly[SBit0[SBit0[SBit0[HighBit1]]] =:= HighBit0#inc#inc#inc#inc#inc#inc#inc#inc]
-  implicitly[SBit1[SBit0[SBit0[HighBit1]]] =:= HighBit0#inc#inc#inc#inc#inc#inc#inc#inc#inc]
+  implicitly[B1[B0[MsbOne]] =:= MsbZero#inc#inc#inc#inc#inc]
+  implicitly[B0[B1[MsbOne]] =:= MsbZero#inc#inc#inc#inc#inc#inc]
+  implicitly[B1[B1[MsbOne]] =:= MsbZero#inc#inc#inc#inc#inc#inc#inc]
+  implicitly[B0[B0[B0[MsbOne]]] =:= MsbZero#inc#inc#inc#inc#inc#inc#inc#inc]
+  implicitly[B1[B0[B0[MsbOne]]] =:= MsbZero#inc#inc#inc#inc#inc#inc#inc#inc#inc]
 
   // 0 = 0 * 2
-  implicitly[HighBit0 =:= HighBit0#dbl]
+  implicitly[MsbZero =:= MsbZero#dbl]
 
   // 2 = 1 * 2
-  implicitly[SBit0[HighBit1] =:= HighBit1#dbl]
+  implicitly[B0[MsbOne] =:= MsbOne#dbl]
 
   // 4 = 2 * 2
-  implicitly[SBit0[SBit0[HighBit1]] =:= SBit0[HighBit1]#dbl]
+  implicitly[B0[B0[MsbOne]] =:= B0[MsbOne]#dbl]
 
   // 6 = 3 * 2
-  implicitly[SBit0[SBit1[HighBit1]] =:= SBit1[HighBit1]#dbl]
+  implicitly[B0[B1[MsbOne]] =:= B1[MsbOne]#dbl]
 
-  type T0 = HighBit0
+  type T0 = MsbZero
   type T1 = T0#inc
   type T2 = T1#inc
   type T3 = T2#inc
@@ -186,47 +186,47 @@ object Main1 extends App {
   type T16 = T15#inc
   type T17 = T16#inc
 
-  implicitly[T17 =:= HighBit0#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc]
+  implicitly[T17 =:= MsbZero#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc#inc]
 
   // 17 = 1 * 2 * 2 * 2 * 1 + 1
-  implicitly[T17 =:= HighBit1#dbl#dbl#dbl#dbl#inc]
+  implicitly[T17 =:= MsbOne#dbl#dbl#dbl#dbl#inc]
 
   type T20 = T10#add[T10]
   type T27 = T20#add[T7]
 
-  //  implicitly[HighBit0#half#add[HighBit1] =:= HighBit1]
+  //  implicitly[MsbZero#half#add[MsbOne] =:= MsbOne]
   //
-  //  implicitly[SBit0[HighBit1] =:= HighBit0#coreT[HighBit1]]
+  //  implicitly[B0[MsbOne] =:= MsbZero#coreT[MsbOne]]
   //
-  //  implicitly[SBit0[HighBit1] <:< HighBit0#coreT[HighBit1]]
+  //  implicitly[B0[MsbOne] <:< MsbZero#coreT[MsbOne]]
   //
-  //  implicitly[HighBit0#coreT[HighBit1] <:< SBit0[HighBit1]]
+  //  implicitly[MsbZero#coreT[MsbOne] <:< B0[MsbOne]]
 
-  //  implicitly[HighBit0#coreT[HighBit1] =:= SBit0[HighBit1]]
+  //  implicitly[MsbZero#coreT[MsbOne] =:= B0[MsbOne]]
 
-  //  HighBit0#coreT[HighBit0#half#add[HighBit1]] =:= SBit0[HighBit1]
+  //  MsbZero#coreT[MsbZero#half#add[MsbOne]] =:= B0[MsbOne]
 
-  implicitly[HighBit0 =:= HighBit0#half]
-  implicitly[HighBit0 =:= HighBit1#half]
-  implicitly[HighBit1 =:= SBit0[HighBit1]#half]
-  implicitly[HighBit1 =:= SBit1[HighBit1]#half]
+  implicitly[MsbZero =:= MsbZero#half]
+  implicitly[MsbZero =:= MsbOne#half]
+  implicitly[MsbOne =:= B0[MsbOne]#half]
+  implicitly[MsbOne =:= B1[MsbOne]#half]
 
   // 0 + 0, 0 + 1
-  implicitly[HighBit0#add[HighBit0] =:= HighBit0]
+  implicitly[MsbZero#add[MsbZero] =:= MsbZero]
 
-  implicitly[HighBit0#add[HighBit1] =:= HighBit1]
+  implicitly[MsbZero#add[MsbOne] =:= MsbOne]
 
   // 1 + 0, 1 + 1
-  implicitly[HighBit1#add[HighBit0] =:= HighBit1]
+  implicitly[MsbOne#add[MsbZero] =:= MsbOne]
 
-  implicitly[HighBit1#add[HighBit1] =:= SBit0[HighBit1]]
+  implicitly[MsbOne#add[MsbOne] =:= B0[MsbOne]]
 
   // 2 + 0, 2 + 1, 2 + 2
-  implicitly[SBit0[HighBit1]#add[HighBit0] =:= SBit0[HighBit1]]
+  implicitly[B0[MsbOne]#add[MsbZero] =:= B0[MsbOne]]
 
-  implicitly[SBit0[HighBit1]#add[HighBit1] =:= SBit1[HighBit1]]
+  implicitly[B0[MsbOne]#add[MsbOne] =:= B1[MsbOne]]
 
-  implicitly[SBit0[HighBit1]#add[SBit0[HighBit1]] =:= SBit0[SBit0[HighBit1]]]
+  implicitly[B0[MsbOne]#add[B0[MsbOne]] =:= B0[B0[MsbOne]]]
 
   implicitly[T2#add[T0] =:= T2]
   implicitly[T2#add[T1] =:= T3]
@@ -261,7 +261,7 @@ object Main1 extends App {
   type T100 = T10#dbl#dbl#dbl#add[T10]#add[T10]
 
   // 100 base 10 = 1100100 base 2
-  implicitly[T100 =:= SBit0[SBit0[SBit1[SBit0[SBit0[SBit1[HighBit1]]]]]]]
+  implicitly[T100 =:= B0[B0[B1[B0[B0[B1[MsbOne]]]]]]]
 
   type T1000 = T100#dbl#dbl#dbl#add[T100]#add[T100]
 
@@ -274,14 +274,14 @@ object Main1 extends App {
   type F7 = F5#add[F6]
 
   implicitly[F7 =:= T10#add[T3]]
-  implicitly[F7 =:= HighBit0#D]
+  implicitly[F7 =:= MsbZero#D]
 
   // Quadrillion = 10 to 15 = 1000 to 5
-  type QuadrillionT = HighBit0#A#A#A#A#A#A#A#A#A#A#A#A#A#A#A
+  type QuadrillionT = MsbZero#A#A#A#A#A#A#A#A#A#A#A#A#A#A#A
 
-  //  type K = SBit0[HighBit1]#add[HighBit0]
+  //  type K = B0[MsbOne]#add[MsbZero]
 
-  //  implicitly[K =:= SBit0[HighBit1]]
+  //  implicitly[K =:= B0[MsbOne]]
   //
   //  "-" match {
   //    case x: K =>
@@ -289,16 +289,16 @@ object Main1 extends App {
 
   //  val t = new K {}
 
-  //  val t = new SBit0[HighBit1]#add[HighBit0] {}
+  //  val t = new B0[MsbOne]#add[MsbZero] {}
 
   // 2 + 0, 2 + 1
-  //  implicitly[SBit0[HighBit1] =:= SBit0[HighBit1]#add[HighBit0]]
-  //  implicitly[SBit1[HighBit1] =:= SBit0[HighBit1]#add[HighBit1]]
+  //  implicitly[B0[MsbOne] =:= B0[MsbOne]#add[MsbZero]]
+  //  implicitly[B1[MsbOne] =:= B0[MsbOne]#add[MsbOne]]
 
-  implicitly[HighBit0#mult[HighBit0] =:= HighBit0]
-  implicitly[HighBit0#mult[HighBit1] =:= HighBit0]
-  implicitly[HighBit1#mult[HighBit0] =:= HighBit0]
-  implicitly[HighBit1#mult[HighBit1] =:= HighBit1]
+  implicitly[MsbZero#mult[MsbZero] =:= MsbZero]
+  implicitly[MsbZero#mult[MsbOne] =:= MsbZero]
+  implicitly[MsbOne#mult[MsbZero] =:= MsbZero]
+  implicitly[MsbOne#mult[MsbOne] =:= MsbOne]
 
   implicitly[T0#mult[T0] =:= T0]
   implicitly[T0#mult[T1] =:= T0]
@@ -339,28 +339,28 @@ object Main1 extends App {
 
   // exp on most significant bits
 
-  implicitly[HighBit0#exp[HighBit0] =:= HighBit0]
-  implicitly[HighBit0#exp[HighBit1] =:= HighBit0]
-  implicitly[HighBit0#exp[T2] =:= HighBit0]
-  implicitly[HighBit0#exp[T3] =:= HighBit0]
+  implicitly[MsbZero#exp[MsbZero] =:= MsbZero]
+  implicitly[MsbZero#exp[MsbOne] =:= MsbZero]
+  implicitly[MsbZero#exp[T2] =:= MsbZero]
+  implicitly[MsbZero#exp[T3] =:= MsbZero]
 
-  implicitly[HighBit1#exp[HighBit0] =:= HighBit1]
-  implicitly[HighBit1#exp[HighBit1] =:= HighBit1]
-  implicitly[HighBit1#exp[T2] =:= HighBit1]
-  implicitly[HighBit1#exp[T3] =:= HighBit1]
+  implicitly[MsbOne#exp[MsbZero] =:= MsbOne]
+  implicitly[MsbOne#exp[MsbOne] =:= MsbOne]
+  implicitly[MsbOne#exp[T2] =:= MsbOne]
+  implicitly[MsbOne#exp[T3] =:= MsbOne]
 
   // expflip on most significant bits
 
   // TODO: 0^0
-  //  implicitly[HighBit0#expflip[HighBit0] =:= HighBit0]
-  implicitly[HighBit0#expflip[HighBit1] =:= HighBit1]
-  implicitly[HighBit0#expflip[T2] =:= HighBit1]
-  implicitly[HighBit0#expflip[T3] =:= HighBit1]
+  //  implicitly[MsbZero#expflip[MsbZero] =:= MsbZero]
+  implicitly[MsbZero#expflip[MsbOne] =:= MsbOne]
+  implicitly[MsbZero#expflip[T2] =:= MsbOne]
+  implicitly[MsbZero#expflip[T3] =:= MsbOne]
 
-  implicitly[HighBit1#expflip[HighBit0] =:= HighBit0]
-  implicitly[HighBit1#expflip[HighBit1] =:= HighBit1]
-  implicitly[HighBit1#expflip[T2] =:= T2]
-  implicitly[HighBit1#expflip[T3] =:= T3]
+  implicitly[MsbOne#expflip[MsbZero] =:= MsbZero]
+  implicitly[MsbOne#expflip[MsbOne] =:= MsbOne]
+  implicitly[MsbOne#expflip[T2] =:= T2]
+  implicitly[MsbOne#expflip[T3] =:= T3]
 
   // expflip
 
@@ -433,7 +433,10 @@ object Main1 extends App {
 
   type Quadrillion2 = T10#exp[T15]
 
-  implicitly[Quadrillion2 =:= QuadrillionT]
+  type Test = T10#exp[T15]
+  type Test2 = T10#exp[T15]
+
+  implicitly[Test =:= Test2]
   //  implicitly[T10#exp[T2] =:= QuadrillionT] // Long compile time
   //  implicitly[T10#exp[T15] =:= QuadrillionT] // Long compile time
   // TODO exponentiate 0 !
