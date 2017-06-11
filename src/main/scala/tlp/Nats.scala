@@ -84,6 +84,28 @@ sealed trait Nat {
   type mult2to8to8 = this.type#multFF#multFF#multFF#multFF#multFF#multFF#multFF#multFF
 }
 
+sealed trait MsbZero extends Nat {
+  override type inc = MsbOne
+  override type dbl = MsbZero
+  override type half = MsbZero
+  override type add[That <: Nat] = That
+  override type coreT[That <: Nat] = B0[That]
+  override type mult[That <: Nat] = MsbZero
+  override type exp[That <: Nat] = MsbZero
+  override type expflip[That <: Nat] = MsbOne
+}
+
+sealed trait MsbOne extends Nat {
+  override type inc = B0[MsbOne]
+  override type dbl = B0[MsbOne]
+  override type half = MsbZero
+  override type add[That <: Nat] = That#inc
+  override type coreT[That <: Nat] = B1[That]
+  override type mult[That <: Nat] = That
+  override type exp[That <: Nat] = MsbOne
+  override type expflip[That <: Nat] = That
+}
+
 sealed trait B0[HigherBits <: Nat] extends Nat {
   override type inc = B1[HigherBits]
   override type dbl = B0[B0[HigherBits]]
@@ -106,30 +128,7 @@ sealed trait B1[HigherBits <: Nat] extends Nat {
   // a^b -> b = this.type, a = That
   // b = 2n + 1
   // a^(2n + 1) = (a^2)^n * a
-  //  override type expflip[That <: Nat] = That#mult[this.type#mult[this.type]#exp[this.type#half]]
   override type expflip[That <: Nat] = HigherBits#expflip[That#mult[That]]#mult[That]
-}
-
-sealed trait MsbZero extends Nat {
-  override type inc = MsbOne
-  override type dbl = MsbZero
-  override type half = MsbZero
-  override type add[That <: Nat] = That
-  override type coreT[That <: Nat] = B0[That]
-  override type mult[That <: Nat] = MsbZero
-  override type exp[That <: Nat] = MsbZero
-  override type expflip[That <: Nat] = MsbOne
-}
-
-sealed trait MsbOne extends Nat {
-  override type inc = B0[MsbOne]
-  override type dbl = B0[MsbOne]
-  override type half = MsbZero
-  override type add[That <: Nat] = That#inc
-  override type coreT[That <: Nat] = B1[That]
-  override type mult[That <: Nat] = That
-  override type exp[That <: Nat] = MsbOne
-  override type expflip[That <: Nat] = That
 }
 
 //Need a special type for the highest bit that switches SpecBit1 => B0, SpecBit1
@@ -257,13 +256,29 @@ object Main1 extends App {
   //
   implicitly[T5#add[T5] =:= T1#add[T2]#add[T3]#add[T4]]
 
+  type T50 = T10#mult[T5]
   //  type T10 = T5#dbl
   type T100 = T10#dbl#dbl#dbl#add[T10]#add[T10]
+  type T200 = T100#dbl
+  type T400 = T200#dbl
+  type T800 = T400#dbl
+  type T1600 = T800#dbl
+
+  type T850 = T800#add[T50]
+  type T900 = T800#add[T100]
 
   // 100 base 10 = 1100100 base 2
   implicitly[T100 =:= B0[B0[B1[B0[B0[B1[MsbOne]]]]]]]
 
   type T1000 = T100#dbl#dbl#dbl#add[T100]#add[T100]
+
+  type T2to101 = T2#exp[T100#inc]
+  type T2to201 = T2#exp[T200#inc]
+  type T2to401 = T2#exp[T400#inc]
+  type T2to801 = T2#exp[T800#inc]
+//  type T2to1600 = T2#exp[T1600#inc]
+  type T2to901 = T2#exp[T900#inc]
+  type T2to1001 = T2#exp[T1000#inc]
 
   type F1 = T1
   type F2 = T1
